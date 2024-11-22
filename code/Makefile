@@ -4,5 +4,5 @@ libs:
 	mv *.o ./obj/
 
 test: libs
-	gcc ./src/movement_test.c -o run ./obj/*.o -lpthreads
+	gcc ./src/movement_test.c -o run ./obj/*.o -lpthread
 	sudo ./run

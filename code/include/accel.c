@@ -102,7 +102,7 @@ bool test_communication() {
 void accel_init() {
     accel_reg_write(DATA_FORMAT, 0x03 | 0x08); //Coloca o formato de dados em 0x03 (+-16g) e resolução completa
     accel_reg_write(BW_RATE, 0x0B); //Coloca o fluxo de saida de dados em 200Hz
-    accel_reg_write(THRESH_ACT,0x02); // Calibra a detecção de movimento(62,5 mg por unidade em g (gravidade da Terra))
+    accel_reg_write(THRESH_ACT,0x01); // Calibra a detecção de movimento(62,5 mg por unidade em g (gravidade da Terra))
     accel_reg_write(ACT_INACT_CTL, 0xFF);	//Termina de habilitar as interrupções por Threshold.
     accel_reg_write(INT_ENABLE,0x80 | 0x10); // Permitir detecção de Data_ready e Activity
 
@@ -249,9 +249,9 @@ void get_direction(pair *direction){
 		accel_readXYZ(XYZ_Data);
 		int16_t X_Data = XYZ_Data[0];
     int16_t Y_Data = XYZ_Data[1];
-
-    direction->x = X_Data;
-    direction->y = Y_Data;
+    
+      direction->x = X_Data;
+      direction->y = Y_Data;
   }
 }
 
