@@ -1,10 +1,9 @@
 #include "../include/gpu.h"
 #include "../include/accel.h"
+#include "../include/mouse.h"
 #include <pthread.h>
-#include <unistd.h>
 #include <fcntl.h>
-#include <sys/time.h>
-#define EVENTPATH "/dev/input/event0"
+#include <unistd.h>
 
 // contém todas as informações de um jogador
 // para usar na fução wbr
@@ -12,20 +11,16 @@ typedef struct {
   pair position;
   int  asset_id;
   int  reg_id;
+  int height;
+  int width;
 } player;
-
-typedef struct {
-  struct timeval time;
-  unsigned short type;
-  unsigned short code;
-  unsigned int value;
-}input_event;
 
 
 // Globals;
 int FD, LISTEN_ACCEL, LISTEN_MOUSE, SHOW_IMAGES;
 pair ACCEL_DEGS;
 player P1, P2;
+mouse_event MOUSE;
 
 void *mouseListener(void *);  // Roda em uma nova thread lendo o mouse
 void *accelListener(void *);  // Roda em uma nova thread lendo o acelerômetro
@@ -41,10 +36,14 @@ int main(void){
   P1.asset_id = 1;
   P1.position.x = 310;
   P1.position.y = 430;
+  P1.height = 20;
+  P1.width = 20;
   P2.reg_id = 2;
   P2.asset_id = 7;
   P2.position.x = 310;
   P2.position.y = 430;
+  P2.height = 20;
+  P2.width = 20;
 
   SHOW_IMAGES = 1;
   gpu_open();
@@ -127,27 +126,15 @@ void *mouseListener(void *arg) {
   int mouse_fd = open(EVENTPATH, O_RDONLY);
   if (mouse_fd == -1)
     exit(1);
-  input_event ev;
   while (LISTEN_MOUSE){
-    read(mouse_fd, &ev, sizeof(ev));    
-//    printf("type: %d, code: %d, val: %d\n", ev.type, ev.code, ev.value);
-    if (ev.type == 2 && (ev.code == 0 || ev.code == 1)){
-      if (ev.code == 0)
-        P2.position.x += ev.value;
-      else
-        P2.position.y += ev.value;
-      
-      if (P2.position.x < 0) 
-        P2.position.x = 0;
-      if (P2.position.x > 620) 
-        P2.position.x = 620;
-      if (P2.position.y < 0) 
-        P2.position.y = 0;
-      if (P2.position.y > 440) 
-        P2.position.y = 440;
-
-        }
+    read_mouse(mouse_fd, &MOUSE);
+    printf("x: %d; y: %d\n", MOUSE.position.x, MOUSE.position.y);
+    if (MOUSE.position.x + P2.width < MAX_SCREEN_WIDTH)
+      P2.position.x = MOUSE.position.x;
+    if (MOUSE.position.y + P2.height < MAX_SCREEN_HEIGHT)
+      P2.position.y = MOUSE.position.y;
   }
+  close(mouse_fd);
  return NULL;
 }
 

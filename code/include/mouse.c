@@ -10,6 +10,8 @@ void read_mouse(int fd, mouse_event *mouse) {
       mouse->position.x += ev.value;
       if (mouse->position.x > MAX_SCREEN_WIDTH)
         mouse->position.x = MAX_SCREEN_WIDTH;
+      if (mouse->position.x < 0)
+        mouse->position.x = 0;
       return;
     }
 
@@ -17,6 +19,8 @@ void read_mouse(int fd, mouse_event *mouse) {
       mouse->position.y += ev.value;
       if (mouse->position.y > MAX_SCREEN_HEIGHT)
         mouse->position.y = MAX_SCREEN_HEIGHT;
+      if (mouse->position.y < 0)
+        mouse->position.y = 0;
       return;
     }
 
