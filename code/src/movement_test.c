@@ -11,6 +11,13 @@
 // para usar na fução wbr
 typedef struct {
   pair position;
+  int asset_id;
+  int reg_id;
+  int speed;
+} shot;
+
+typedef struct {
+  pair position;
   int  asset_id;
   int  reg_id;
   shot shoots[2];
@@ -23,12 +30,6 @@ typedef struct {
   unsigned int value;
 } input_event;
 
-typedef struct {
-  pair position;
-  int asset_id;
-  int reg_id;
-  int speed;
-} shot;
 
 // Globals;
 int FD, LISTEN_ACCEL, LISTEN_MOUSE, SHOW_IMAGES, LISTEN_BUTTONS, buttomPressed;
@@ -42,10 +43,10 @@ void *accelListener(void *);  // Roda em uma nova thread lendo o acelerômetro
 void startAccelListener();    // inicia a comunicação com o acelerômetro
 void stopAccelListener();     // encerra acomunicação com o acelerômetro
 void *render(void *);         // thread para redenizar os sprites na tela
-void player_shot(player player); // faz o personagem atirar
+void *player_shot(player *player, shot *tiro); // faz o personagem atirar
 
 int main(void){
-  pthread_t mouse_t, accel_t, render_t, buttom_t;
+  pthread_t mouse_t, accel_t, render_t, buttom_t, tiro_t;
   char stop;
 
   P1.reg_id = 1;
@@ -78,6 +79,7 @@ int main(void){
   pthread_create(&render_t, NULL, render, NULL); // cria a thread do acelerometro
   pthread_create(&mouse_t, NULL, mouseListener, NULL); // cria a thread do acelerometro
   pthread_create(&buttom_t, NULL, buttomListener, NULL); // cria a thread do acelerometro
+  pthread_create(&tiro_t, NULL, player_shot, NULL); // cria a thread do acelerometro
   
   // as threads rodam mesmo com o código aguardando isso aqui
   printf("Press enter to stop\n");
@@ -92,6 +94,7 @@ int main(void){
   pthread_join(render_t, NULL);
   pthread_join(mouse_t, NULL);
   pthread_join(buttom_t, NULL);
+  pthread_join(tiro_t, NULL);
 
   stopAccelListener();
 
@@ -136,7 +139,7 @@ void *accelListener(void *arg) {
     direction.y = 0;
 
     P1.position.x += ACCEL_DEGS.x/10;
-    P1.position.y -= ACCEL_DEGS.y/10;
+    /*P1.position.y -= ACCEL_DEGS.y/10;*/
 
     if (P1.position.x < 0) 
       P1.position.x = 0;
@@ -158,7 +161,7 @@ void *render(void *arg){
   while (SHOW_IMAGES){
     wbr_sp(1, P1.position.x, P1.position.y, P1.asset_id, P1.reg_id); 
     wbr_sp(1, P2.position.x, P2.position.y, P2.asset_id, P2.reg_id); 
-    if (buttomPressed == -1){
+    if (buttomPressed == 14){
       player_shot(&P1, &tiro);
     }
   }
@@ -197,16 +200,23 @@ void *mouseListener(void *arg) {
 }
 
 void *buttomListener(void *arg){
-  buttomPressed = read_keys(); 
+  while(LISTEN_BUTTONS){
+    buttomPressed = read_keys(); 
+  }
 };
 
-void player_shot(player *player, shot *tiro){
-  // o sprite do tiro vai aumentar/diminuir a posição y e manter a posição x de quem desparou
-  tiro->asset_id = 13;
-  int i;
-  tiro->position.x = player->position.x;
-  for (i = 20; i < 440; i++){
-      tiro->position.y += i;
+void *player_shot(player *player, shot *tiro){
+  if (buttomPressed == 14){
+    printf("atirar ?\n");
+    // o sprite do tiro vai aumentar/diminuir a posição y e manter a posição x de quem desparou
+    tiro->asset_id = 13;
+    tiro->position.x = player->position.x;
+    int i;
+    for (i = 420; i > 20; i--){
+      printf("%d\n", i);
+      tiro->position.y = i;
+      wbr_sp(1, tiro->position.x, tiro->position.y, tiro->asset_id, tiro->reg_id);
+    }
+    // vai parar/sumir quando atingir a borda ou outro pixel
   }
-  // vai parar/sumir quando atingir a borda ou outro pixel
 };
