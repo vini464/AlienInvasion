@@ -1,5 +1,6 @@
 #include "../include/gpu.h"
 #include "../include/accel.h"
+#include "../include/utils.h"
 #include <pthread.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -12,6 +13,7 @@ typedef struct {
   pair position;
   int  asset_id;
   int  reg_id;
+  shot shoots[2];
 } player;
 
 typedef struct {
@@ -19,51 +21,81 @@ typedef struct {
   unsigned short type;
   unsigned short code;
   unsigned int value;
-}input_event;
+} input_event;
 
+typedef struct {
+  pair position;
+  int asset_id;
+  int reg_id;
+  int speed;
+} shot;
 
 // Globals;
-int FD, LISTEN_ACCEL, LISTEN_MOUSE, SHOW_IMAGES;
+int FD, LISTEN_ACCEL, LISTEN_MOUSE, SHOW_IMAGES, LISTEN_BUTTONS, buttomPressed;
 pair ACCEL_DEGS;
 player P1, P2;
+shot tiro;
 
 void *mouseListener(void *);  // Roda em uma nova thread lendo o mouse
+void *buttomListener(void *); // Roda em uma nova thread lendo os botoes
 void *accelListener(void *);  // Roda em uma nova thread lendo o acelerômetro
 void startAccelListener();    // inicia a comunicação com o acelerômetro
 void stopAccelListener();     // encerra acomunicação com o acelerômetro
-void *render(void *);
-
+void *render(void *);         // thread para redenizar os sprites na tela
+void player_shot(player player); // faz o personagem atirar
 
 int main(void){
-  pthread_t mouse_t, accel_t, render_t;
+  pthread_t mouse_t, accel_t, render_t, buttom_t;
   char stop;
+
   P1.reg_id = 1;
   P1.asset_id = 1;
   P1.position.x = 310;
   P1.position.y = 430;
+
   P2.reg_id = 2;
   P2.asset_id = 7;
   P2.position.x = 310;
   P2.position.y = 430;
 
+  tiro.position.x = 0;
+  tiro.position.y = 0;
+  tiro.asset_id = 33;
+  tiro.reg_id = 5;
+  tiro.speed = 3;
   SHOW_IMAGES = 1;
+
   gpu_open();
+
   LISTEN_ACCEL = 1;
   LISTEN_MOUSE = 1;
+  LISTEN_BUTTONS = 1;
   startAccelListener(); // inicia a comunicação com o acelerômetro
+
   wbr_sp(1, P1.position.x, P1.position.y, P1.asset_id, P1.reg_id); // faz o primeiro desenho do personagem
+  
   pthread_create(&accel_t, NULL, accelListener, NULL); // cria a thread do acelerometro
   pthread_create(&render_t, NULL, render, NULL); // cria a thread do acelerometro
   pthread_create(&mouse_t, NULL, mouseListener, NULL); // cria a thread do acelerometro
+  pthread_create(&buttom_t, NULL, buttomListener, NULL); // cria a thread do acelerometro
+  
+  // as threads rodam mesmo com o código aguardando isso aqui
   printf("Press enter to stop\n");
   scanf("%c", &stop);
+
   SHOW_IMAGES = 0;
   LISTEN_ACCEL = 0;
   LISTEN_MOUSE = 0;
+  LISTEN_BUTTONS = 0;
+
   pthread_join(accel_t, NULL);
   pthread_join(render_t, NULL);
   pthread_join(mouse_t, NULL);
+  pthread_join(buttom_t, NULL);
+
   stopAccelListener();
+
+  gpu_close();
   return 0;
 }
 
@@ -76,67 +108,80 @@ void startAccelListener() {
     else
       break;
   }
+
   if (FD == -1)
     exit(-1);
+
   I2C0_init();
   accel_init();
   accel_calibrate(100);
 }
+
 void *accelListener(void *arg) {
   int accel_read = 0;
   pair direction;
+
   ACCEL_DEGS.x = 0;
   ACCEL_DEGS.y = 0;
+
   while (LISTEN_ACCEL) {
     get_direction(&direction);
-  
+
     ACCEL_DEGS.x = direction.x;
     ACCEL_DEGS.y = direction.y;
-    
-//    printf("degs: %d %d\n", ACCEL_DEGS.x, ACCEL_DEGS.y);
-    
+
+    //    printf("degs: %d %d\n", ACCEL_DEGS.x, ACCEL_DEGS.y);
+
     direction.x = 0;
     direction.y = 0;
-      P1.position.x += ACCEL_DEGS.x/10;
-      P1.position.y -= ACCEL_DEGS.y/10;
-      
-      if (P1.position.x < 0) 
-        P1.position.x = 0;
-      if (P1.position.x > 620) 
-        P1.position.x = 620;
-      if (P1.position.y < 0) 
-        P1.position.y = 0;
-      if (P1.position.y > 440) 
-        P1.position.y = 440;
 
-  usleep(10000);
+    P1.position.x += ACCEL_DEGS.x/10;
+    P1.position.y -= ACCEL_DEGS.y/10;
+
+    if (P1.position.x < 0) 
+      P1.position.x = 0;
+    if (P1.position.x > 620) 
+      P1.position.x = 620;
+    if (P1.position.y < 0) 
+      P1.position.y = 0;
+    if (P1.position.y > 440) 
+      P1.position.y = 440;
+
+    usleep(10000);
   }
   return NULL;
 }
+
 void stopAccelListener() { close_and_unmap_dev_mem(FD); }
 
 void *render(void *arg){
   while (SHOW_IMAGES){
-      wbr_sp(1, P1.position.x, P1.position.y, P1.asset_id, P1.reg_id); 
-      wbr_sp(1, P2.position.x, P2.position.y, P2.asset_id, P2.reg_id); 
+    wbr_sp(1, P1.position.x, P1.position.y, P1.asset_id, P1.reg_id); 
+    wbr_sp(1, P2.position.x, P2.position.y, P2.asset_id, P2.reg_id); 
+    if (buttomPressed == -1){
+      player_shot(&P1, &tiro);
+    }
   }
-return NULL;
+  return NULL;
 }
 
 void *mouseListener(void *arg) {
+
   int mouse_fd = open(EVENTPATH, O_RDONLY);
+
   if (mouse_fd == -1)
     exit(1);
   input_event ev;
+
   while (LISTEN_MOUSE){
     read(mouse_fd, &ev, sizeof(ev));    
-//    printf("type: %d, code: %d, val: %d\n", ev.type, ev.code, ev.value);
+    //    printf("type: %d, code: %d, val: %d\n", ev.type, ev.code, ev.value);
     if (ev.type == 2 && (ev.code == 0 || ev.code == 1)){
       if (ev.code == 0)
         P2.position.x += ev.value;
       else
         P2.position.y += ev.value;
-      
+
       if (P2.position.x < 0) 
         P2.position.x = 0;
       if (P2.position.x > 620) 
@@ -146,10 +191,22 @@ void *mouseListener(void *arg) {
       if (P2.position.y > 440) 
         P2.position.y = 440;
 
-        }
+    }
   }
- return NULL;
+  return NULL;
 }
 
+void *buttomListener(void *arg){
+  buttomPressed = read_keys(); 
+};
 
-
+void player_shot(player *player, shot *tiro){
+  // o sprite do tiro vai aumentar/diminuir a posição y e manter a posição x de quem desparou
+  tiro->asset_id = 13;
+  int i;
+  tiro->position.x = player->position.x;
+  for (i = 20; i < 440; i++){
+      tiro->position.y += i;
+  }
+  // vai parar/sumir quando atingir a borda ou outro pixel
+};
