@@ -1,7 +1,6 @@
 libs:
 	as -g -o gpu.o ./include/gpu.s
-	gcc -c ./include/accel.c
-	gcc -c ./include/mouse.c
+	gcc -c ./include/*.c
 	mv *.o ./obj/
 
 test: libs

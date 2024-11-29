@@ -1,19 +1,15 @@
 #include "../include/gpu.h"
 #include "../include/accel.h"
 #include "../include/mouse.h"
+#include "../include/utils.h"
+#include "../include/collision.h"
 #include <pthread.h>
 #include <fcntl.h>
 #include <unistd.h>
 
+
 // contém todas as informações de um jogador
 // para usar na fução wbr
-typedef struct {
-  pair position;
-  int  asset_id;
-  int  reg_id;
-  int height;
-  int width;
-} player;
 
 
 // Globals;
@@ -99,6 +95,7 @@ void *accelListener(void *arg) {
       P1.position.x += ACCEL_DEGS.x/10;
       P1.position.y -= ACCEL_DEGS.y/10;
       
+    if (!check_collide(P1, P2)){
       if (P1.position.x < 0) 
         P1.position.x = 0;
       if (P1.position.x > 620) 
@@ -107,6 +104,7 @@ void *accelListener(void *arg) {
         P1.position.y = 0;
       if (P1.position.y > 440) 
         P1.position.y = 440;
+    }
 
   usleep(10000);
   }
@@ -129,10 +127,12 @@ void *mouseListener(void *arg) {
   while (LISTEN_MOUSE){
     read_mouse(mouse_fd, &MOUSE);
     printf("x: %d; y: %d\n", MOUSE.position.x, MOUSE.position.y);
-    if (MOUSE.position.x + P2.width < MAX_SCREEN_WIDTH)
-      P2.position.x = MOUSE.position.x;
-    if (MOUSE.position.y + P2.height < MAX_SCREEN_HEIGHT)
-      P2.position.y = MOUSE.position.y;
+    if (!check_collide(P1, P2)){
+      if (MOUSE.position.x + P2.width < MAX_SCREEN_WIDTH)
+        P2.position.x = MOUSE.position.x;
+      if (MOUSE.position.y + P2.height < MAX_SCREEN_HEIGHT)
+        P2.position.y = MOUSE.position.y;
+    }
   }
   close(mouse_fd);
  return NULL;
