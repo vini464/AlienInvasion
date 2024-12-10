@@ -17,7 +17,6 @@ typedef struct {
 } input_event;
 
 typedef struct {
-  struct timeval last_event;
   int btn_left;
   int btn_middle;
   int btn_right;
