@@ -4,9 +4,9 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <sys/time.h>
+#include <time.h>
 #define EVENTPATH "/dev/input/event0"
-
+#define MAX_SHOTS 3
 // contém todas as informações de um jogador
 // para usar na fução wbr
 typedef struct {
@@ -20,7 +20,8 @@ typedef struct {
   pair position;
   int  asset_id;
   int  reg_id;
-  shot shoots[2];
+  int  active_shots;
+  shot shoots[MAX_SHOTS];
 } player;
 
 typedef struct {
@@ -32,23 +33,24 @@ typedef struct {
 
 
 // Globals;
-int FD, LISTEN_ACCEL, LISTEN_MOUSE, SHOW_IMAGES, LISTEN_BUTTONS, buttomPressed;
+int FD, LISTEN_ACCEL, LISTEN_MOUSE, SHOW_IMAGES, LISTEN_BUTTONS, buttomPressed, SHOOTING;
 pair ACCEL_DEGS;
 player P1, P2;
 shot tiro;
 
 void *mouseListener(void *);  // Roda em uma nova thread lendo o mouse
+void *update_shot(void *);
 void *buttomListener(void *); // Roda em uma nova thread lendo os botoes
 void *accelListener(void *);  // Roda em uma nova thread lendo o acelerômetro
 void startAccelListener();    // inicia a comunicação com o acelerômetro
 void stopAccelListener();     // encerra acomunicação com o acelerômetro
 void *render(void *);         // thread para redenizar os sprites na tela
-void *player_shot(player *player, shot *tiro); // faz o personagem atirar
+void player_shot(player *player, shot *tiro); // faz o personagem atirar
 
 int main(void){
-  pthread_t mouse_t, accel_t, render_t, buttom_t, tiro_t;
+  pthread_t mouse_t, accel_t, render_t, buttom_t, updateShot_t;
   char stop;
-
+  
   P1.reg_id = 1;
   P1.asset_id = 1;
   P1.position.x = 310;
@@ -61,7 +63,7 @@ int main(void){
 
   tiro.position.x = 0;
   tiro.position.y = 0;
-  tiro.asset_id = 33;
+  tiro.asset_id = 4;
   tiro.reg_id = 5;
   tiro.speed = 3;
   SHOW_IMAGES = 1;
@@ -71,6 +73,7 @@ int main(void){
   LISTEN_ACCEL = 1;
   LISTEN_MOUSE = 1;
   LISTEN_BUTTONS = 1;
+  SHOOTING = 0;
   startAccelListener(); // inicia a comunicação com o acelerômetro
 
   wbr_sp(1, P1.position.x, P1.position.y, P1.asset_id, P1.reg_id); // faz o primeiro desenho do personagem
@@ -79,12 +82,11 @@ int main(void){
   pthread_create(&render_t, NULL, render, NULL); // cria a thread do acelerometro
   pthread_create(&mouse_t, NULL, mouseListener, NULL); // cria a thread do acelerometro
   pthread_create(&buttom_t, NULL, buttomListener, NULL); // cria a thread do acelerometro
-  pthread_create(&tiro_t, NULL, player_shot, NULL); // cria a thread do acelerometro
+  pthread_create(&updateShot_t, NULL, update_shot, NULL); // cria a thread do tiro 
   
   // as threads rodam mesmo com o código aguardando isso aqui
   printf("Press enter to stop\n");
   scanf("%c", &stop);
-
   SHOW_IMAGES = 0;
   LISTEN_ACCEL = 0;
   LISTEN_MOUSE = 0;
@@ -94,7 +96,7 @@ int main(void){
   pthread_join(render_t, NULL);
   pthread_join(mouse_t, NULL);
   pthread_join(buttom_t, NULL);
-  pthread_join(tiro_t, NULL);
+  pthread_join(updateShot_t, NULL);
 
   stopAccelListener();
 
@@ -161,8 +163,9 @@ void *render(void *arg){
   while (SHOW_IMAGES){
     wbr_sp(1, P1.position.x, P1.position.y, P1.asset_id, P1.reg_id); 
     wbr_sp(1, P2.position.x, P2.position.y, P2.asset_id, P2.reg_id); 
-    if (buttomPressed == 14){
-      player_shot(&P1, &tiro);
+    int i;
+    for (i = 0; i < P1.active_shots; i++){
+      wbr_sp(1, P1.shoots[i].position.x, P1.shoots[i].position.y, P1.shoots[i].asset_id, P1.shoots[i].reg_id);
     }
   }
   return NULL;
@@ -180,6 +183,7 @@ void *mouseListener(void *arg) {
     read(mouse_fd, &ev, sizeof(ev));    
     //    printf("type: %d, code: %d, val: %d\n", ev.type, ev.code, ev.value);
     if (ev.type == 2 && (ev.code == 0 || ev.code == 1)){
+      // isso aqui vai ter que mudar pra um lugar separado
       if (ev.code == 0)
         P2.position.x += ev.value;
       else
@@ -202,21 +206,67 @@ void *mouseListener(void *arg) {
 void *buttomListener(void *arg){
   while(LISTEN_BUTTONS){
     buttomPressed = read_keys(); 
+    if (buttomPressed == 14 && SHOOTING == 0){
+      SHOOTING = 1;
+      P1.active_shots++;
+      SHOOTING = 0;
+    }
   }
 };
 
-void *player_shot(player *player, shot *tiro){
-  if (buttomPressed == 14){
-    printf("atirar ?\n");
-    // o sprite do tiro vai aumentar/diminuir a posição y e manter a posição x de quem desparou
-    tiro->asset_id = 13;
-    tiro->position.x = player->position.x;
+void creat_shot(int index){
+  P1.shoots[index].position.x = P1.position.x;
+  P1.shoots[index].position.y = P1.position.y - 20;
+  P1.shoots[index].asset_id = 4; // tem que mudar aqui
+  P1.shoots[index].reg_id = 5;
+  P1.shoots[index].speed = 3;
+}
+
+void *update_shot(void *){
+  while (1) {
+    clock_t before, after;
+    int msec = 0;
+
     int i;
-    for (i = 420; i > 20; i--){
-      printf("%d\n", i);
-      tiro->position.y = i;
-      wbr_sp(1, tiro->position.x, tiro->position.y, tiro->asset_id, tiro->reg_id);
+    for (i = 0; i < P1.active_shots; i++){
+      creat_shot(i);
     }
-    // vai parar/sumir quando atingir a borda ou outro pixel
+    while(1){
+      for (i = 0; i < P1.active_shots; i++){
+        do {
+          clock_t difference = clock() -before;
+          msec = difference * 1000 / CLOCKS_PER_SEC;
+        } while (msec < 1);
+
+        P1.shoots[i].position.y -= 2;
+        if(P1.shoots[i].position.y >= 0){
+          P1.active_shots--;
+        }
+      }
+      break;
+    }
   }
+}
+
+void player_shot(player *player, shot *tiro){
+  // o sprite do tiro vai aumentar/diminuir a posição y e manter a posição x de quem desparou
+  tiro->asset_id = 11;
+  tiro->position.x = player->position.x;
+  clock_t before, after;
+  int msec = 0;
+  tiro->position.y = player->position.y - 20;
+
+  while(tiro->position.y >= 0){
+    /*printf("%d\n", tiro->position.y);*/
+    msec = 0;
+    before = clock();
+    do {
+      clock_t difference = clock() -before;
+      msec = difference * 1000 / CLOCKS_PER_SEC;
+    } while (msec < 1);
+    tiro->position.y -=2;
+  }
+  /*printf("parou de atirar\n");*/
+  // vai parar/sumir quando atingir a borda ou outro pixel
+  wbr_sp(0, tiro->position.x, tiro->position.y, tiro->asset_id, tiro->reg_id);
 };
