@@ -5,6 +5,7 @@
 #include "../include/sprite_api.h"
 
 #include <time.h>
+#include <stdio.h>
 
 #define MAX_SHOTS 4
 #define SHOT_SPEED 4
@@ -12,6 +13,7 @@
 #define BOTTOM 480
 #define LEFT 0
 #define RIGHT 640
+#define CENTER 320
 
 /*
  * Sobre os registradores:
@@ -50,9 +52,42 @@ void * projectilesThread(void * arg);
 void * renderThread(void * arg);
 
 Player TANK, SHIP;
+int PAUSED;
 
 int main(void) {
+  int i;
+  // inicializa os jogadores
+  for (i=0; i< 2; i++) {
+    TANK.sprite[i].reg_id = i + 1;
+    TANK.sprite[i].act = 1;
+    TANK.sprite[i].mem_offset = i; // TODO: alterar
+    TANK.sprite[i].pos_x = CENTER + 20 * (i - 1);
+    TANK.sprite[i].pos_y = BOTTOM-20;
 
+    SHIP.sprite[i].reg_id = i + 3;
+    SHIP.sprite[i].act = 1;
+    SHIP.sprite[i].mem_offset = i + 2; // TODO: alterar
+    SHIP.sprite[i].pos_y = 0;
+    SHIP.sprite[i].pos_x = CENTER + 20 * (i - 1) ;
+
+  }
+  // inicializa os tiros
+  for (i=0;i<MAX_SHOTS;i++) {
+    SHIP.shots[i].act = 0;
+    SHIP.shots[i].reg_id = i + 11;
+    SHIP.shots[i].mem_offset = 11; // TODO: alterar
+    SHIP.shots[i].pos_y = 0;
+    SHIP.shots[i].pos_x = 0;
+
+
+    TANK.shots[i].act = 0;
+    TANK.shots[i].reg_id = i + 7;
+    TANK.shots[i].mem_offset = 11; // TODO: alterar
+    TANK.shots[i].pos_y = 0;
+    TANK.shots[i].pos_x = 0;
+
+  }
+    
 
   return 0;
 }
@@ -65,27 +100,76 @@ void timer(int trigger) {
     difference = clock() - before;
     msec = difference * 1000 / CLOCKS_PER_SEC;
   } while (msec < trigger);
-
 }
+
+// leitura dos botões da placa, [jogador1]
+void * buttonsThread(void * arg) {
+  int * stop = (int *) arg;
+  int btn, i, hold=0;
+  while (!(*stop)) {
+    btn = (~read_keys()) & 0b1111;
+    switch (btn) {
+      case 1: // tiro
+        printf("tiros disponíveis: %d\n", TANK.avaiable_shots);
+        if (TANK.avaiable_shots && !hold) {
+          hold = 1;
+          TANK.avaiable_shots--;
+          for (i=0; i<MAX_SHOTS; i++) {
+            if (!TANK.active_shots[i]) {
+              TANK.active_shots[i] = 1;
+              TANK.shots[i].act = 1;
+              TANK.shots[i].pos_x = TANK.sprite[1].pos_x;
+              TANK.shots[i].pos_y = TANK.sprite[0].pos_y;
+            }
+          }
+        }
+        break;
+      case 2:
+        printf("botão 2");
+        break;
+      case 4:
+        printf("botão 3");
+        break;
+      case 8:
+        printf("botão 4");
+        break;
+      default:
+        hold = 0;
+        break;
+    }
+  }
+  return NULL;
+}
+
 
 // Controle do jogador 2 (ship)
 void * mouseThread(void * arg) {
   int * stop = (int *) arg;
   int fd = open_mouse();
   int i; // auxiliar para percorrer os sprites
-  mouse_event mouse ={0};
+  mouse_event mouse ={0}; // pode dar erro no mouse.direction
   while (!(*stop)) {
     read_mouse(fd, &mouse);
+    if (mouse.btn_right) { // pausa o jogo
+      if (PAUSED)
+        PAUSED = 0;
+      else 
+        PAUSED = 1;
+      mouse.btn_right = 0;
+    }
+    if (PAUSED) {
+      mouse.btn_left = 0;
+      mouse.btn_middle = 0; // TODO: habilitar lógica de reinicio
+      continue; // vai para a próxima iteração do while
+    }
     if (mouse.btn_left) {
       if (SHIP.avaiable_shots > 0) {
         for (i=0; i<MAX_SHOTS; i++) {
           if (!SHIP.active_shots[i]) {
             SHIP.active_shots[i] = 1;
             SHIP.shots[i].pos_x = SHIP.sprite[1].pos_x;
-            SHIP.shots[i].pos_y = SHIP.sprite[0].pos_y;
+            SHIP.shots[i].pos_y = SHIP.sprite[0].pos_y + 20;
             SHIP.shots[i].act = 1;
-            SHIP.shots[i].reg_id = i+11; // registrador fixo
-            SHIP.shots[i].mem_offset = 11; // TODO: atualizar este valor
             break;
           }
         }
@@ -125,6 +209,7 @@ void * projectilesThread(void * arg) {
         if (checkCollision(&TANK.shots[i], &SHIP.sprite[0]) || checkCollision(&TANK.shots[i], &SHIP.sprite[0]) || TANK.shots[i].pos_y < TOP){
           TANK.active_shots[i] = 0;
           TANK.avaiable_shots++;
+          TANK.shots[i].act = 0;
           if (TANK.shots[i].pos_y >= TOP){
             SHIP.life -= TANK.damage;
           }
@@ -136,6 +221,7 @@ void * projectilesThread(void * arg) {
 
           SHIP.active_shots[i] = 0;
           SHIP.avaiable_shots++;
+          SHIP.shots[i].act = 0;
           if (SHIP.shots[i].pos_y <= BOTTOM - 20){
             TANK.life -= SHIP.damage;
           }
@@ -158,12 +244,8 @@ void * renderThread(void * arg) {
       showSprite(&SHIP.sprite[i]);
     }
     for (i = 0; i < MAX_SHOTS; i++) {
-      if (TANK.active_shots[i]) {
         showSprite(&TANK.shots[i]);
-      }
-      if (SHIP.active_shots[i]) {
         showSprite(&SHIP.shots[i]);
-      }
     }
   }
   return NULL;
