@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "gpu.h"
+#include "../gpu.h"
 
 unsigned short ship_1[400] = {
     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   511, 511,
