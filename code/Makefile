@@ -9,5 +9,5 @@ libs:
 	mv *.o ./obj/
 
 test: assets libs
-	gcc ./src/test.c -o run ./obj/*.o -lpthread
+	gcc ./src/game.c -o run ./obj/*.o -lpthread
 	sudo ./run
