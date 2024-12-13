@@ -6,6 +6,7 @@
 
 #include <time.h>
 #include <stdio.h>
+#include <pthread.h>
 
 #define MAX_SHOTS 4
 #define SHOT_SPEED 4
@@ -57,6 +58,14 @@ int PAUSED;
 int main(void) {
   int i;
   // inicializa os jogadores
+  TANK.damage = 1;
+  TANK.life = 5;
+  TANK.avaiable_shots = MAX_SHOTS;
+
+  SHIP.damage = 1;
+  SHIP.life = 3;
+  SHIP.avaiable_shots = MAX_SHOTS;
+
   for (i=0; i< 2; i++) {
     TANK.sprite[i].reg_id = i + 1;
     TANK.sprite[i].act = 1;
@@ -84,9 +93,30 @@ int main(void) {
     TANK.shots[i].mem_offset = 11; // TODO: alterar
     TANK.shots[i].pos_y = 0;
     TANK.shots[i].pos_x = 0;
-
   }
-    
+
+  pthread_t accel_t, mouse_t, buttons_t, projectiles_t, render_t;
+  int stop_threads = 0;
+  
+  pthread_create(&accel_t, NULL, accelThread, &stop_threads);
+  pthread_create(&mouse_t, NULL, mouseThread, &stop_threads);
+  pthread_create(&buttons_t, NULL, buttonsThread, &stop_threads);
+  pthread_create(&projectiles_t, NULL, projectilesThread, &stop_threads);
+  pthread_create(&render_t, NULL, renderThread, &stop_threads);
+
+  while (TANK.life > 0 && SHIP.life > 0) {
+    if (PAUSED) {
+      printf("o jogo está pausado!\n");
+    }
+  }
+
+  printf("game over\n");
+  stop_threads = 1;
+  pthread_join(accel_t, NULL);
+  pthread_join(mouse_t, NULL);
+  pthread_join(buttons_t, NULL);
+  pthread_join(projectiles_t, NULL);
+  pthread_join(render_t, NULL);
 
   return 0;
 }
@@ -133,6 +163,7 @@ void * accelThread(void * arg) {
       else if (TANK.sprite[i].pos_x > RIGHT + 20 * (i-1))
         TANK.sprite[i].pos_x = RIGHT + 20 * (i-1);
     }
+    timer(1); // 1 milisegundo
   }
 
   close_and_unmap_dev_mem(fd);
