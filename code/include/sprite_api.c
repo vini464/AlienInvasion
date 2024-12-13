@@ -1,7 +1,6 @@
 #include "sprite_api.h"
 
-Sprite *createSprite(int initial_posx, int initial_posy, int act,
-                     int mem_offset, int reg_id) {
+Sprite *createSprite(int initial_posx, int initial_posy, int act, int mem_offset, int reg_id) {
   Sprite *new_sprite = (Sprite *)malloc(sizeof(Sprite));
   new_sprite->pos_x = initial_posx;
   new_sprite->pos_y = initial_posy;
@@ -32,4 +31,6 @@ void updateSpritePosition(Sprite *sp, int pos_x, int pos_y) {
   sp->pos_y = pos_y;
 }
 
-void deleteSprite(Sprite *sp) { free(sp); }
+void deleteSprite(Sprite *sp) { 
+  free(sp);
+}
