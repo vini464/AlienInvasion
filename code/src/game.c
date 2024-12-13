@@ -79,7 +79,6 @@ int main(void) {
     SHIP.shots[i].pos_y = 0;
     SHIP.shots[i].pos_x = 0;
 
-
     TANK.shots[i].act = 0;
     TANK.shots[i].reg_id = i + 7;
     TANK.shots[i].mem_offset = 11; // TODO: alterar
@@ -100,6 +99,44 @@ void timer(int trigger) {
     difference = clock() - before;
     msec = difference * 1000 / CLOCKS_PER_SEC;
   } while (msec < trigger);
+}
+
+// thread do acelerômetro [jogador2]
+void * accelThread(void * arg) {
+  int * stop = (int *) arg;
+
+  int i, fd;
+
+  for (i = 0; i < 10; i++) {
+    fd = open_and_mmap_dev_mem();
+    if (fd == -1)
+      printf("não foi possível abrir /dev/mem\n");
+    else
+      break;
+  }
+  if (fd == -1)
+    exit(-1);
+  I2C0_init();
+  accel_init();
+  accel_calibrate(60);
+  
+  pair direction;
+  while (!(*stop)) {
+    get_direction(&direction);
+    for (i = 0; i < 2; i++) {
+      TANK.sprite[i].pos_x += direction.x; // só vai ser movimentado no eixo x
+      if (checkCollision(&TANK.sprite[i], &SHIP.sprite[0]) || checkCollision(&TANK.sprite[i], &SHIP.sprite[1])) {
+        TANK.sprite[i].pos_x -= direction.x;
+      }
+      if (TANK.sprite[i].pos_x < LEFT + i * 20) 
+        TANK.sprite[i].pos_x = LEFT + i * 20; 
+      else if (TANK.sprite[i].pos_x > RIGHT + 20 * (i-1))
+        TANK.sprite[i].pos_x = RIGHT + 20 * (i-1);
+    }
+  }
+
+  close_and_unmap_dev_mem(fd);
+  return NULL;
 }
 
 // leitura dos botões da placa, [jogador1]
