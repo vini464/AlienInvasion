@@ -5,6 +5,8 @@ libs:
 
 assets:
 	gcc ./include/assets/sprites.c ./obj/gpu.o -o exec
+	gcc -c ./include/assets/backgrounds.c
+	mv backgrounds.o ./obj
 	sudo ./exec
 	mv exec ./include/assets/
 
