@@ -1,8 +1,17 @@
 libs:
 	as -g -o gpu.o ./include/gpu.s
-	gcc -c ./include/accel.c
+	gcc -c ./include/*.c
 	mv *.o ./obj/
 
-test: libs
-	gcc ./src/movement_test.c -o run ./obj/*.o -lpthread
+assets:
+	gcc ./include/assets/sprites.c ./obj/gpu.o -o exec
+	sudo ./exec
+	mv exec ./include/assets/
+
+test: libs  
+	gcc ./src/game.c -o run ./obj/*.o -lpthread
 	sudo ./run
+
+clean:
+	rm -rf ./obj/*.o 
+	rm -rf ./run
