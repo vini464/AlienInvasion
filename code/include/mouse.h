@@ -17,14 +17,15 @@ typedef struct {
 } input_event;
 
 typedef struct {
-  struct timeval last_event;
   int btn_left;
   int btn_middle;
   int btn_right;
-  pair position;
+  pair direction;
   int scroll; // talvez remover
 } mouse_event;
 
-void read_mouse(int, mouse_event *);
+int open_mouse();
+void read_mouse(int fd, mouse_event * mouse);
+void close_mouse(int fd);
 
 #endif // !MOUSE_H

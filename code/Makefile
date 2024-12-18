@@ -3,6 +3,17 @@ libs:
 	gcc -c ./include/*.c
 	mv *.o ./obj/
 
-test: libs
-	gcc ./src/movement_test.c -o run ./obj/*.o -lpthread
+assets:
+	gcc ./include/assets/sprites.c ./obj/gpu.o -o exec
+	gcc -c ./include/assets/backgrounds.c
+	mv backgrounds.o ./obj
+	sudo ./exec
+	mv exec ./include/assets/
+
+test: assets libs  
+	gcc ./src/game.c -o run ./obj/*.o -lpthread
 	sudo ./run
+
+clean:
+	rm -rf ./obj/*.o 
+	rm -rf ./run

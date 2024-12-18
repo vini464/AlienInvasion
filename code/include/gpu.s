@@ -280,6 +280,7 @@ wsm:
   add sp,  sp, #16
 
   bx lr
+
 @@ wsm v2
 @ argumentos:
 @ r0 -> Vetor com 400 posições indicando a cor de cada pixel;
@@ -335,6 +336,7 @@ end_save_spr:
   add sp, sp, #36
 
   bx lr
+
 @ ------------------------------------------------------ @
 @ ------------------------------------------------------ @
 @ Argumentos:
@@ -394,7 +396,6 @@ dp_triangle:
   add sp, sp, #28
 
   bx lr
-
 
 @ ------------------------------------------------------ @
 @ Argumentos:
