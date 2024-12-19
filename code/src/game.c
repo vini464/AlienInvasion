@@ -34,7 +34,7 @@ typedef struct player {
                                // ou não
   int avaiable_shots;          // limite de tiros disponíveis
   int life;
-  int damage; 
+  int damage;
 } Player;
 
 extern unsigned short bg_inicio[4800];
@@ -74,14 +74,15 @@ int main(void) {
 
   pthread_t accel_t, mouse_t, buttons_t, projectiles_t, render_t;
   int stop_threads = 0;
-       int portal_vel_1, portal_vel_2;
+  int portal_vel_1, portal_vel_2;
   PAUSERENDER = NEW_GAME = 0;
   WAIT = 1;
   pthread_create(&buttons_t, NULL, buttonsThread, &stop_threads);
   clear_screen();
   set_bg(bg_inicio);
 
-  while (WAIT); // espera o jogador pressionar qualquer botão da placa
+  while (WAIT)
+    ; // espera o jogador pressionar qualquer botão da placa
 
   pthread_create(&accel_t, NULL, accelThread, &stop_threads);
   pthread_create(&mouse_t, NULL, mouseThread, &stop_threads);
@@ -91,47 +92,46 @@ int main(void) {
   do {
     game_set();
     while (TANK.life > 0 && SHIP.life > 0) {
-      if (PAUSED) continue;
+      if (PAUSED)
+        continue;
       portal_vel_1 = 1, portal_vel_2 = -1;
       PORTAL1.pos_x += portal_vel_1;
       PORTAL2.pos_x += portal_vel_2;
-      if (PORTAL1.pos_x > RIGHT){
+      if (PORTAL1.pos_x > RIGHT) {
         PORTAL1.pos_x = LEFT;
       }
-      if ( PORTAL2.pos_x < LEFT){
-        PORTAL2.pos_x = RIGHT-20;
+      if (PORTAL2.pos_x < LEFT) {
+        PORTAL2.pos_x = RIGHT - 20;
       }
       usleep(10000);
-/**
-      if (PAUSED) {
-        printf("o jogo está pausado!\n");
-        continue;
-      } else {
-        system("clear");
-        printf("Jogador 1 [TANK]:\n");
-        printf("Tiros disponíveis: %d\n", TANK.avaiable_shots);
-        printf("Vida: %d\n", TANK.life);
-        printf("Jogador 2 [SHIP]\n");
-        printf("Tiros disponíveis: %d\n", SHIP.avaiable_shots);
-        printf("Vida: %d\n", SHIP.life);
-        printf("-=-=-=-=-=-=-=-=-=-=-=-=-=-\n");
-      }
-**/
-    
+      /**
+            if (PAUSED) {
+              printf("o jogo está pausado!\n");
+              continue;
+            } else {
+              system("clear");
+              printf("Jogador 1 [TANK]:\n");
+              printf("Tiros disponíveis: %d\n", TANK.avaiable_shots);
+              printf("Vida: %d\n", TANK.life);
+              printf("Jogador 2 [SHIP]\n");
+              printf("Tiros disponíveis: %d\n", SHIP.avaiable_shots);
+              printf("Vida: %d\n", SHIP.life);
+              printf("-=-=-=-=-=-=-=-=-=-=-=-=-=-\n");
+            }
+      **/
     }
     printf("game over!\n");
     printf("Venceder: %s\n", TANK.life == 0 ? "SHIP" : "TANK");
-      PAUSERENDER =1;
-    if (TANK.life == 0){
+    PAUSERENDER = 1;
+    if (TANK.life == 0) {
       set_bg(bg_alien_wins);
-}
+    }
 
     else {
       set_bg(bg_human_wins);
-}
+    }
     END = 1;
-    while (END)
-      ;
+    while (END);
 
   } while (NEW_GAME);
 
@@ -206,10 +206,10 @@ void *buttonsThread(void *arg) {
   int btn, i, hold = 0;
   while (!(*stop)) {
     btn = ((~read_keys()) & 0b1111);
-    if (WAIT && btn != 0){
+    if (WAIT && btn != 0) {
       WAIT = 0;
       btn = 0;
-      hold =1;
+      hold = 1;
       continue;
     }
     switch (btn) {
@@ -259,8 +259,8 @@ void *buttonsThread(void *arg) {
         if (END) {
           printf("reiniciando...\n");
           clear_screen();
-          PAUSERENDER = 0;
           game_set();
+          PAUSERENDER = 0;
           NEW_GAME = 1;
           END = 0;
         }
@@ -340,58 +340,60 @@ void *mouseThread(void *arg) {
 
 void *projectilesThread(void *arg) {
   int *stop = (int *)arg;
-  int i,tp, collide = 0;
+  int i, tp, collide = 0;
   while (!(*stop)) {
-      while (PAUSED);
-      for (i = 0; i < MAX_SHOTS; i++) {
-        if (TANK.active_shots[i] && !PAUSED) {
-          TANK.shots[i].pos_y -= SHOT_SPEED;
-          TANK.shots[i].mem_offset ++;
-          if (TANK.shots[i].mem_offset > 11)
+    while (PAUSED)
+      ;
+    for (i = 0; i < MAX_SHOTS; i++) {
+      if (TANK.active_shots[i] && !PAUSED) {
+        TANK.shots[i].pos_y -= SHOT_SPEED;
+        TANK.shots[i].mem_offset++;
+        if (TANK.shots[i].mem_offset > 11)
           TANK.shots[i].mem_offset = 9;
-          tp = checkCollision(&TANK.shots[i], &PORTAL2);
-            if (tp) {
-              TANK.shots[i].pos_x = PORTAL1.pos_x;
-              TANK.shots[i].pos_y = PORTAL1.pos_y - 10;
-            }
-          collide = checkCollision(&TANK.shots[i], &SHIP.sprite[0]) ||
-            checkCollision(&TANK.shots[i], &SHIP.sprite[1]);
-          if (!PAUSED && (collide || TANK.shots[i].pos_y < TOP)) {
-            TANK.active_shots[i] = 0;
-            TANK.avaiable_shots++;
-            TANK.shots[i].act = 0;
-            if (collide) {
-              SHIP.life -= TANK.damage;
-            }
-          }
+        tp = checkCollision(&TANK.shots[i], &PORTAL2);
+        if (tp) {
+          TANK.shots[i].pos_x = PORTAL1.pos_x;
+          TANK.shots[i].pos_y = PORTAL1.pos_y - 10;
         }
-        if (!PAUSED && SHIP.active_shots[i]) {
-          SHIP.shots[i].pos_y += SHOT_SPEED;
-          tp = checkCollision(&SHIP.shots[i], &PORTAL1);
-            if (tp) {
-              SHIP.shots[i].pos_x = PORTAL2.pos_x;
-              SHIP.shots[i].pos_y = PORTAL2.pos_y + 10;
-            }
-          collide = checkCollision(&SHIP.shots[i], &TANK.sprite[0]) ||
-            checkCollision(&SHIP.shots[i], &TANK.sprite[1]);
-          if (!PAUSED && (collide ||
-              SHIP.shots[i].pos_y >
-              BOTTOM -
-              20)) { // TODO: alterar constante 20 para um valor variável
-            // dentro da sprite, fazer isso tambem com TOP
-
-            SHIP.active_shots[i] = 0;
-            SHIP.avaiable_shots++;
-            SHIP.shots[i].act = 0;
-            if (collide) {
-              TANK.life -= SHIP.damage;
-            }
+        collide = checkCollision(&TANK.shots[i], &SHIP.sprite[0]) ||
+                  checkCollision(&TANK.shots[i], &SHIP.sprite[1]);
+        if (!PAUSED && (collide || TANK.shots[i].pos_y < TOP)) {
+          TANK.active_shots[i] = 0;
+          TANK.avaiable_shots++;
+          TANK.shots[i].act = 0;
+          if (collide) {
+            SHIP.life -= TANK.damage;
           }
         }
       }
-      if (!PAUSED)
-      timer(4); // espera por 4 milisegundos
+      if (!PAUSED && SHIP.active_shots[i]) {
+        SHIP.shots[i].pos_y += SHOT_SPEED;
+        tp = checkCollision(&SHIP.shots[i], &PORTAL1);
+        if (tp) {
+          SHIP.shots[i].pos_x = PORTAL2.pos_x;
+          SHIP.shots[i].pos_y = PORTAL2.pos_y + 10;
+        }
+        collide = checkCollision(&SHIP.shots[i], &TANK.sprite[0]) ||
+                  checkCollision(&SHIP.shots[i], &TANK.sprite[1]);
+        if (!PAUSED &&
+            (collide ||
+             SHIP.shots[i].pos_y >
+                 BOTTOM -
+                     20)) { // TODO: alterar constante 20 para um valor variável
+          // dentro da sprite, fazer isso tambem com TOP
+
+          SHIP.active_shots[i] = 0;
+          SHIP.avaiable_shots++;
+          SHIP.shots[i].act = 0;
+          if (collide) {
+            TANK.life -= SHIP.damage;
+          }
+        }
+      }
     }
+    if (!PAUSED)
+      timer(4); // espera por 4 milisegundos
+  }
   return NULL;
 }
 
@@ -410,30 +412,30 @@ void *renderThread(void *arg) {
         showSprite(&TANK.shots[i]);
         showSprite(&SHIP.shots[i]);
       }
-    // rendenizacao dos sprites de vida
-    int base = 15; // onde comecam a sequencia de sprites dos numeros
-    unsigned int decimal_tank = TANK.life / 10;
-    unsigned int inteiro_tank= TANK.life % 10;
-    unsigned int decimal_ship = SHIP.life / 10;
-    unsigned int inteiro_ship= SHIP.life % 10;
-    // tenho que ter o sprite base do numero
-    if(TANK.life >= 10){
-      wbr_sp(1, 0, 460, base+decimal_tank, 17);  
-      wbr_sp(1, 25, 460, base+inteiro_tank, 18);  
-    } else {
-      wbr_sp(0, 0, 460, base+decimal_tank, 17);
-      wbr_sp(1, 25, 460, base+inteiro_tank, 18);  
-    }
-    wbr_sp(1, 50, 460, base-2, 19);  
-    wbr_sp(1, 50, 0, base-1, 20);  
-    if(SHIP.life >= 10){
-    // aqui funciona pra qualquer valor da vida da nave com 2 digitos
-      wbr_sp(1, 0, 0, base+decimal_ship, 16);  
-      wbr_sp(1, 25, 0, base+inteiro_ship, 15);  
-    } else {
-      wbr_sp(0, 0, 0, base+decimal_ship, 16);
-      wbr_sp(1, 25, 0, base+inteiro_ship, 15);  
-    }
+      // rendenizacao dos sprites de vida
+      int base = 15; // onde comecam a sequencia de sprites dos numeros
+      unsigned int decimal_tank = TANK.life / 10;
+      unsigned int inteiro_tank = TANK.life % 10;
+      unsigned int decimal_ship = SHIP.life / 10;
+      unsigned int inteiro_ship = SHIP.life % 10;
+      // tenho que ter o sprite base do numero
+      if (TANK.life >= 10) {
+        wbr_sp(1, 0, 460, base + decimal_tank, 17);
+        wbr_sp(1, 25, 460, base + inteiro_tank, 18);
+      } else {
+        wbr_sp(0, 0, 460, base + decimal_tank, 17);
+        wbr_sp(1, 25, 460, base + inteiro_tank, 18);
+      }
+      wbr_sp(1, 50, 460, base - 2, 19);
+      wbr_sp(1, 50, 0, base - 1, 20);
+      if (SHIP.life >= 10) {
+        // aqui funciona pra qualquer valor da vida da nave com 2 digitos
+        wbr_sp(1, 0, 0, base + decimal_ship, 16);
+        wbr_sp(1, 25, 0, base + inteiro_ship, 15);
+      } else {
+        wbr_sp(0, 0, 0, base + decimal_ship, 16);
+        wbr_sp(1, 25, 0, base + inteiro_ship, 15);
+      }
     }
   }
   return NULL;
@@ -457,10 +459,10 @@ void clear_screen() {
 }
 
 void game_set() {
-    PAUSERENDER =1;
+  PAUSERENDER = 1;
   clear_screen();
-    set_bg(bg_jogo);
-    PAUSERENDER =0;
+  set_bg(bg_jogo);
+  PAUSERENDER = 0;
   int i;
   // inicializa os jogadores
   TANK.damage = 1;
@@ -500,17 +502,17 @@ void game_set() {
     TANK.shots[i].pos_y = 0;
     TANK.shots[i].pos_x = 0;
   }
-  PORTAL1.act=1;
+  PORTAL1.act = 1;
   PORTAL1.reg_id = 22;
   PORTAL1.mem_offset = 25;
-  PORTAL1.pos_y = BOTTOM/2 -20;
-  PORTAL1.pos_x = RIGHT/2;
+  PORTAL1.pos_y = BOTTOM / 2 - 20;
+  PORTAL1.pos_x = RIGHT / 2;
 
-  PORTAL2.act=1;
+  PORTAL2.act = 1;
   PORTAL2.reg_id = 21;
   PORTAL2.mem_offset = 26;
-  PORTAL2.pos_y = BOTTOM/2 + 20;
-  PORTAL2.pos_x = RIGHT/2;
+  PORTAL2.pos_y = BOTTOM / 2 + 20;
+  PORTAL2.pos_x = RIGHT / 2;
 
   END = 0;
   PAUSED = 0;
