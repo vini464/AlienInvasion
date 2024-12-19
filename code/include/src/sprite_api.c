@@ -1,4 +1,4 @@
-#include "sprite_api.h"
+#include "../sprite_api.h"
 
 Sprite *createSprite(int initial_posx, int initial_posy, int act, int mem_offset, int reg_id) {
   Sprite *new_sprite = (Sprite *)malloc(sizeof(Sprite));

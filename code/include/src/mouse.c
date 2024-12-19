@@ -1,5 +1,5 @@
-#include "mouse.h"
-#include "utils.h"
+#include "../mouse.h"
+#include "../utils.h"
 #include <fcntl.h>
 
 

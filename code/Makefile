@@ -1,6 +1,6 @@
 libs:
-	as -g -o gpu.o ./include/gpu.s
-	gcc -c ./include/*.c
+	as -g -o gpu.o ./include/src/gpu.s
+	gcc -c ./include/src/*.c
 	mv *.o ./obj/
 
 assets:
@@ -10,10 +10,10 @@ assets:
 	sudo ./exec
 	mv exec ./include/assets/
 
-test: assets libs  
+game: assets libs  
 	gcc ./src/game.c -o run ./obj/*.o -lpthread
 	sudo ./run
 
 clean:
-	rm -rf ./obj/*.o 
-	rm -rf ./run
+	rm ./obj/*.o 
+	rm ./run

@@ -1,4 +1,4 @@
-#include "accel.h"
+#include "../accel.h"
 
 
 void configure_pinmux(){
