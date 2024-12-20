@@ -123,7 +123,7 @@ int main(void) {
     printf("game over!\n");
     printf("Venceder: %s\n", TANK.life == 0 ? "SHIP" : "TANK");
     PAUSERENDER = 1;
-    if (TANK.life == 0) {
+    if (TANK.life <= 0) {
       set_bg(bg_alien_wins);
     }
 
