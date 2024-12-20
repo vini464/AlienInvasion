@@ -232,17 +232,19 @@ void *buttonsThread(void *arg) {
       if (!hold && !END) {
         hold = 1;
         if (PAUSED) {
-          clear_screen();
-          set_bg(bg_jogo);
+          dp_square(WHITE, 0, 20, 20, 0);
+          dp_square(WHITE, 0, 40, 20, 1);
+          dp_square(WHITE, 0, 20, 50, 2);
+          dp_square(WHITE, 0, 40, 50, 3);
           PAUSERENDER = 0;
           PAUSED = 0;
-          usleep(1000);
         } else {
           PAUSED = 1;
           PAUSERENDER = 1;
-          usleep(2000);
-          clear_screen();
-          set_bg(bg_pause);
+          dp_square(WHITE, 1, 20, 20, 0);
+          dp_square(WHITE, 1, 40, 20, 1);
+          dp_square(WHITE, 1, 20, 50, 2);
+          dp_square(WHITE, 1, 40, 50, 3);
         }
       }
 
@@ -259,7 +261,6 @@ void *buttonsThread(void *arg) {
         if (END) {
           printf("reiniciando...\n");
           clear_screen();
-          game_set();
           PAUSERENDER = 0;
           NEW_GAME = 1;
           END = 0;
@@ -427,14 +428,14 @@ void *renderThread(void *arg) {
         wbr_sp(1, 25, 460, base + inteiro_tank, 18);
       }
       wbr_sp(1, 50, 460, base - 2, 19);
-      wbr_sp(1, 50, 0, base - 1, 20);
+      wbr_sp(1, 50, 10, base - 1, 20);
       if (SHIP.life >= 10) {
         // aqui funciona pra qualquer valor da vida da nave com 2 digitos
-        wbr_sp(1, 0, 0, base + decimal_ship, 16);
-        wbr_sp(1, 25, 0, base + inteiro_ship, 15);
+        wbr_sp(1, 0, 10, base + decimal_ship, 16);
+        wbr_sp(1, 25, 10, base + inteiro_ship, 15);
       } else {
-        wbr_sp(0, 0, 0, base + decimal_ship, 16);
-        wbr_sp(1, 25, 0, base + inteiro_ship, 15);
+        wbr_sp(0, 0, 10, base + decimal_ship, 16);
+        wbr_sp(1, 25, 10, base + inteiro_ship, 15);
       }
     }
   }
