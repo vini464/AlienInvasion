@@ -16,10 +16,11 @@ Na placa, temos o acelerômetro (com ele que movimentamos o tanque), e 4 botões
 <img src="https://github.com/vini464/AlienInvasion/blob/main/media/leds-sdBoard.png" alt="Botões da placa" width="600">
 </div>
 <br>
-- O botão 1 atira;
-- O botão 2 pausa e retoma o jogo;
-- O botão 3 reinicia o jogo (somente quando pausado ou quando um dos jogadores venceu);
-- O botão 4 sai do jogo (apenas quando pausado ou quando um dos jogadores venceu).
+
+- O botão 1 atira
+- O botão 2 pausa e retoma o jogo
+- O botão 3 reinicia o jogo (somente quando pausado ou quando um dos jogadores venceu)
+- O botão 4 sai do jogo (apenas quando pausado ou quando um dos jogadores venceu)
 
 Nosso outro controle é um mouse:
 
