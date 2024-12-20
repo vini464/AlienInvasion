@@ -1,9 +1,7 @@
 # Alien Invasion
----
 Este projeto trata-se de um jogo 1v1 onde um dos jogadores controla uma nave espacial invasora e o outro controla um tanque de guerra. O objetivo de cada um é destruir seu inimigo, afinal estamos em guerra! Para balancear o jogo, a nave tem menos vida que o tanque, em compensação o tanque tem seu movimento limitado. Chame seu amigo pegue sua fpga e vamos jogar!
 
 ## Instalação:
----
 Primeiramete baixe os arquivos do jogo disponíveis [aqui](https://github.com/vini464/AlienInvasion/releases/tag/v1.0.1) e os extraia, ou clone este repositório.
 Agora, entre na pasta code dentro da pasta do projeto. 
 Por fim, para compilar e rodar o jogo basta executar esse comando: ```make game```
@@ -11,7 +9,6 @@ Por fim, para compilar e rodar o jogo basta executar esse comando: ```make game`
 *Obs: Você precisa de previlégios de administrador para rodar o jogo.
 
 ## Como jogar Alien Invasion
----
 Antes de mais nada, vamos conhecer nossos controles:
 Na placa, temos o acelerômetro (com ele que movimentamos o tanque), e 4 botões:
 --[[mostrar aqui foto da placa (colocar numero nos botões)]]
