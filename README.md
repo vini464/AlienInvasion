@@ -11,7 +11,11 @@ Por fim, para compilar e rodar o jogo basta executar esse comando: ```make game`
 ## Como jogar Alien Invasion
 Antes de mais nada, vamos conhecer nossos controles:
 Na placa, temos o acelerômetro (com ele que movimentamos o tanque), e 4 botões:
---[[mostrar aqui foto da placa (colocar numero nos botões)]]
+
+<div align=center>
+<img src="https://github.com/vini464/AlienInvasion/blob/main/media/leds-sdBoard.png" alt="Botões da placa" width="600">
+</div>
+<br>
 - O botão 1 atira;
 - O botão 2 pausa e retoma o jogo;
 - O botão 3 reinicia o jogo (somente quando pausado ou quando um dos jogadores venceu);
