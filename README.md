@@ -4,7 +4,7 @@ Este projeto trata-se de um jogo 1v1 onde um dos jogadores controla uma nave esp
 
 ## Instalação:
 ---
-Primeiramete baixe os arquivos do jogo disponíveis [aqui](https://github.com/vini464/AlienInvasion/releases/tag/v1.0) e os extraia, ou clone este repositório.
+Primeiramete baixe os arquivos do jogo disponíveis [aqui](https://github.com/vini464/AlienInvasion/releases/tag/v1.0.1) e os extraia, ou clone este repositório.
 Agora, entre na pasta code dentro da pasta do projeto. 
 Por fim, para compilar e rodar o jogo basta executar esse comando: ```make game```
 
