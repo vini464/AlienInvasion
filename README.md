@@ -54,3 +54,7 @@ Em qualquer uma dessas duas telas você pode precionar o botão 3 para reiniciar
 Lembrando que: A qualquer momento em que os jogadores estejam vivos, o botão dois pode ser pressionado para pausar o jogo e então poder reiniciar ou sair do jogo (contamos com a integridade do jogador que segura a placa para não reiniciar o jogo "sem querer" quando estiver perdendo).
 
 Divirtam-se!!
+
+### Desenvolvedores
+
+Everton Vinicius | Gabriel Santos | Pedro Henrique
